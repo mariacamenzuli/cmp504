@@ -13,5 +13,10 @@ setup(name='cmp504',
           'mss',
           'Pillow'
       ],
+      test_suite='nose2.collector.collector',
+      tests_require=[
+          'nose2',
+          'assertpy'
+      ],
       include_package_data=True,
       zip_safe=False)

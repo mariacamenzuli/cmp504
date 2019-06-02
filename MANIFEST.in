@@ -1,1 +1,2 @@
-include cmp504/data/*
+recursive-include cmp504/data *
+prune cmp504/data/test

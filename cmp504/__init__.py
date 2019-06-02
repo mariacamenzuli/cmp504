@@ -1,2 +1,2 @@
 import cmp504.mouse_controller
-import cmp504.display_controller
+import cmp504.computer_vision
