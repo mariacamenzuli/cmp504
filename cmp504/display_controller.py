@@ -3,13 +3,18 @@ import numpy as np
 from mss import mss
 from PIL import Image
 
+
 class DisplayController:
     def __init__(self, static_templates):
         # imread 2nd param 0 indicates read image in grayscale
         # grayscale apparently simplifies search in OpenCV
-        self.templates = { k: cv2.imread(v, 0) for (k, v) in static_templates.items() }
+        self.templates = {
+            k: cv2.imread(v, 0) for (k, v) in static_templates.items()
+        }
 
-        self.monitor = { 'top': 0, 'left': 0, 'width': 1920, 'height': 1080 }
+        self.monitor = {
+            'top': 0, 'left': 0, 'width': 1920, 'height': 1080
+        }
         self.screen = mss()
 
         self.frame = None
@@ -28,7 +33,6 @@ class DisplayController:
 
     def read_image(self, path):
         return cv2.imread(path, 0)
-
 
     def convert_rgb_to_bgr(self, img):
         return img[:, :, ::-1]
