@@ -11,7 +11,8 @@ setup(name='cmp504',
           'opencv-contrib-python',
           'numpy',
           'mss',
-          'Pillow'
+          'Pillow',
+          'matplotlib'
       ],
       test_suite='nose2.collector.collector',
       tests_require=[
