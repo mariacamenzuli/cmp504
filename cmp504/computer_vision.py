@@ -53,11 +53,16 @@ class CVController:
                       method.name)
         self.assert_controller_has_frame()
 
-        template = cv2.imread(template_path, cv2.IMREAD_COLOR)
+        template = cv2.imread(template_path, cv2.IMREAD_UNCHANGED)
         template_height = template.shape[0]
         template_width = template.shape[1]
 
-        match_result = cv2.matchTemplate(self.frame, template, method.value)
+        template_split = self.split_out_alpha_mask(template)
+        if template_split['mask_present'] is True:
+            match_result = cv2.matchTemplate(self.frame, template_split['image'], method.value, template_split['mask'])
+        else:
+            match_result = cv2.matchTemplate(self.frame, template_split['image'], method.value)
+
         min_value, max_value, min_location, max_location = cv2.minMaxLoc(match_result)
 
         # The best match for SQUARE_DIFFERENCE and SQUARE_DIFFERENCE_NORMALIZED is the global minimum value.
@@ -91,6 +96,19 @@ class CVController:
             self.render_image(frame_copy)
 
         return self.__calculate_midpoint(top_left, bottom_right)
+
+    @staticmethod
+    def split_out_alpha_mask(image):
+        if image.shape[2] > 3:
+            logging.debug('Alpha channel detected in image. Splitting out mask.')
+            channels = cv2.split(image)
+            mask = np.array(channels[3])
+            mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+            image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+
+            return {'mask_present': True, 'image': image, 'mask': mask}
+        else:
+            return {'mask_present': False, 'image': image}
 
     @staticmethod
     def render_image(image):
