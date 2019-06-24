@@ -35,13 +35,11 @@ class CVController:
         img = Image.frombytes('RGB', monitor_screenshot.size, monitor_screenshot.rgb)
         img = np.array(img)
         # while the MSS library will take screenshots using RGB colors, OpenCV uses BGR colors
-        img = self.__convert_rgb_to_bgr(img)
-        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        self.frame = img_gray
+        self.frame = self.__convert_rgb_to_bgr(img)
 
     def load_frame(self, frame_path: str):
         logging.debug("Loading frame from file '%s'.", frame_path)
-        self.frame = cv2.imread(frame_path, cv2.IMREAD_GRAYSCALE)
+        self.frame = cv2.imread(frame_path, cv2.IMREAD_COLOR)
 
     # todo: add method to find all matches
     def find_template_match(self,
@@ -55,8 +53,9 @@ class CVController:
                       method.name)
         self.assert_controller_has_frame()
 
-        template = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
-        template_width, template_height = template.shape[::-1]
+        template = cv2.imread(template_path, cv2.IMREAD_COLOR)
+        template_height = template.shape[0]
+        template_width = template.shape[1]
 
         match_result = cv2.matchTemplate(self.frame, template, method.value)
         min_value, max_value, min_location, max_location = cv2.minMaxLoc(match_result)
