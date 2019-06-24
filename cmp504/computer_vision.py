@@ -67,14 +67,14 @@ class CVController:
             logging.info("Minimum match value was %f.", min_value)
             if min_value > threshold:
                 logging.info("No match found.")
-                return False
+                return None
 
             top_left = min_location
         else:
             logging.info("Maximum match value was %f.", max_value)
             if max_value < threshold:
                 logging.info("No match found.")
-                return False
+                return None
 
             top_left = max_location
 
@@ -91,7 +91,7 @@ class CVController:
             cv2.rectangle(frame_copy, top_left, bottom_right, 255, 2)
             self.render_image(frame_copy)
 
-        return True
+        return self.__calculate_midpoint(top_left, bottom_right)
 
     @staticmethod
     def render_image(image):
@@ -105,3 +105,7 @@ class CVController:
     @staticmethod
     def __convert_rgb_to_bgr(image):
         return image[:, :, ::-1]
+
+    @staticmethod
+    def __calculate_midpoint(point1, point2):
+        return int(round((point1[0] + point2[0]) / 2)), int(round((point1[1] + point2[1]) / 2))

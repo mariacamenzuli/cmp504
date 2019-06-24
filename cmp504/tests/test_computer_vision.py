@@ -9,7 +9,7 @@ def test_find_template_match_square_difference_when_match_exists():
                                          threshold=0.2,
                                          method=cmp504.computer_vision.TemplateMatchingMethod.SQUARE_DIFFERENCE_NORMALIZED)
 
-    assert_that(result).is_true()
+    assert_that(result).is_not_none()
 
 
 def test_find_template_match_square_difference_when_match_does_not_exist():
@@ -19,7 +19,7 @@ def test_find_template_match_square_difference_when_match_does_not_exist():
                                          threshold=0.2,
                                          method=cmp504.computer_vision.TemplateMatchingMethod.SQUARE_DIFFERENCE_NORMALIZED)
 
-    assert_that(result).is_false()
+    assert_that(result).is_none()
 
 
 def test_find_template_match_correlation_coefficient_when_match_exists():
@@ -29,7 +29,7 @@ def test_find_template_match_correlation_coefficient_when_match_exists():
                                          threshold=0.8,
                                          method=cmp504.computer_vision.TemplateMatchingMethod.CORRELATION_COEFFICIENT_NORMALIZED)
 
-    assert_that(result).is_true()
+    assert_that(result).is_not_none()
 
 
 def test_find_template_match_correlation_coefficient_when_match_does_not_exist():
@@ -39,7 +39,7 @@ def test_find_template_match_correlation_coefficient_when_match_does_not_exist()
                                          threshold=0.8,
                                          method=cmp504.computer_vision.TemplateMatchingMethod.CORRELATION_COEFFICIENT_NORMALIZED)
 
-    assert_that(result).is_false()
+    assert_that(result).is_none()
 
 
 def test_find_template_match_cross_correlation_when_match_exists():
@@ -49,7 +49,7 @@ def test_find_template_match_cross_correlation_when_match_exists():
                                          threshold=0.8,
                                          method=cmp504.computer_vision.TemplateMatchingMethod.CROSS_CORRELATION_NORMALIZED)
 
-    assert_that(result).is_true()
+    assert_that(result).is_not_none()
 
 
 def test_find_template_match_cross_correlation_when_match_does_not_exist():
@@ -59,7 +59,7 @@ def test_find_template_match_cross_correlation_when_match_does_not_exist():
                                          threshold=0.8,
                                          method=cmp504.computer_vision.TemplateMatchingMethod.CROSS_CORRELATION_NORMALIZED)
 
-    assert_that(result).is_false()
+    assert_that(result).is_none()
 
 
 # def test_capture_frame():
