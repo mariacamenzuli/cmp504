@@ -12,7 +12,8 @@ setup(name='cmp504',
           'numpy',
           'mss',
           'Pillow',
-          'matplotlib'
+          'matplotlib',
+          'pytesseract'
       ],
       test_suite='nose2.collector.collector',
       tests_require=[
