@@ -3,6 +3,12 @@ dist: xenial   # required for Python >= 3.7
 services:
   - xvfb
 
+addons:
+  apt:
+    update: true
+    packages:
+      - tesseract-ocr
+
 language: python
 
 python:

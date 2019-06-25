@@ -42,11 +42,11 @@ class CVController:
         logging.debug("Loading frame from file '%s'.", frame_path)
         self.frame = cv2.imread(frame_path, cv2.IMREAD_COLOR)
 
-    def find_text(self):
-        return pytesseract.image_to_string(self.frame)
-
-    def find_text(self, image):
-        return pytesseract.image_to_string(image)
+    def find_text(self, image=None):
+        if image is None:
+            return pytesseract.image_to_string(self.frame)
+        else:
+            return pytesseract.image_to_string(image)
 
     # todo: add method to find all matches
     def find_template_match(self,
