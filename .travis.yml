@@ -1,11 +1,13 @@
 dist: xenial   # required for Python >= 3.7
 
-env:
-  global:
-  - TESS=4.0.0
-
 services:
   - xvfb
+
+addons:
+  apt:
+    update: true
+    packages:
+      - tesseract-ocr
 
 language: python
 
@@ -14,26 +16,6 @@ python:
 
 install:
   - pip install -r requirements.txt
-  - wget https://github.com/tesseract-ocr/tesseract/archive/$TESS.tar.gz
-  - tar xvf $TESS.tar.gz
-  - mv tesseract-$TESS tesseract
-  - export TESSERACT_INSTALL=$HOME/.tesseract
-  - export TESSERACT_PKG=$TESSERACT_INSTALL/lib/pkgconfig
-  - export LD_LIBRARY_PATH=$TESSERACT_INSTALL/lib:$LD_LIBRARY_PATH
-  - export PKG_CONFIG_PATH=$TESSERACT_PKG:$PKG_CONFIG_PATH
-  - export LDFLAGS="-L$TESSERACT_INSTALL/lib"
-  - export CFLAGS="-I$TESSERACT_INSTALL/include"
 
 script:
-  - cd tesseract
-  - ./autogen.sh
-  - ./configure --prefix=$TESSERACT_INSTALL --disable-static CFLAGS="-O3"
-  - make
-  - make install
-  - cd ..
-  - cd $TESSERACT_INSTALL/share/tessdata/
-  - wget https://github.com/tesseract-ocr/tessdata_fast/raw/master/eng.traineddata
-  - cd $HOME
-  - tar cvfJ tesseract.tar.xz .tesseract
-  - ls -lah tesseract.tar.xz
   - nose2 -v
