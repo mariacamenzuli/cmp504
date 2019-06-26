@@ -72,7 +72,7 @@ def test_find_template_match_with_transparent_template_when_match_exists():
     assert_that(result).is_not_none()
 
 
-def test_find_text_in_frame():
+def test_find_text_in_frame_with_no_preprocessing():
     cv_ctrl = cmp504.computer_vision.CVController()
     cv_ctrl.load_frame("cmp504/data/test/wargroove_text_panel.png")
     result = cv_ctrl.find_text()
@@ -84,3 +84,14 @@ def test_find_text_in_frame():
     result = cv_ctrl.find_text()
 
     assert_that(result).is_equal_to("650 3428")
+
+def test_find_text_in_frame_with_preprocessing():
+    cv_ctrl = cmp504.computer_vision.CVController()
+    cv_ctrl.load_frame("cmp504/data/test/wargroove_tile_info_panel.png")
+    pre_processing_steps = cmp504.image_processing.ImageProcessingStepChain()
+    pre_processing_steps.append(cmp504.image_processing.BGR2Grayscale())
+    pre_processing_steps.append(cmp504.image_processing.Resize(3, 3))
+    result = cv_ctrl.find_text(pre_processing_chain=pre_processing_steps)
+
+    assert_that(result).contains("Income")
+    assert_that(result).contains("Stronghold")

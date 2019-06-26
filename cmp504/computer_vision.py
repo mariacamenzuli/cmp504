@@ -1,6 +1,7 @@
 import logging
 import cv2
 import pytesseract
+import cmp504.image_processing as image_processing
 import numpy as np
 from mss import mss
 from PIL import Image
@@ -42,11 +43,16 @@ class CVController:
         logging.debug("Loading frame from file '%s'.", frame_path)
         self.frame = cv2.imread(frame_path, cv2.IMREAD_COLOR)
 
-    def find_text(self, image=None):
+    def find_text(self, image=None, pre_processing_chain: image_processing.ImageProcessingStepChain = None):
         if image is None:
-            return pytesseract.image_to_string(self.frame)
+            target_image = self.frame
         else:
-            return pytesseract.image_to_string(image)
+            target_image = image
+
+        if pre_processing_chain is not None:
+            target_image = pre_processing_chain.apply(target_image)
+
+        return pytesseract.image_to_string(target_image)
 
     # todo: add method to find all matches
     def find_template_match(self,
