@@ -37,3 +37,27 @@ class Resize(ImageProcessingStep):
 class BGR2Grayscale(ImageProcessingStep):
     def process(self, image):
         return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+
+class CannyEdgeDetection(ImageProcessingStep):
+    def process(self, image):
+        return cv2.Canny(image, 100, 200)
+
+
+class GaussianBlur(ImageProcessingStep):
+    def __init__(self, kernel_size: int):
+        self.kernel_size = kernel_size
+
+    def process(self, image):
+        return cv2.GaussianBlur(image, (self.kernel_size, self.kernel_size), 0)
+
+
+class Threshold(ImageProcessingStep):
+    def process(self, image):
+        # return cv2.threshold(image, 0, 255, cv2.THRESH_BINARY)[1]
+        return cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
+
+
+class Invert(ImageProcessingStep):
+    def process(self, image):
+        return cv2.bitwise_not(image)

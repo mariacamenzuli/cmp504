@@ -18,6 +18,17 @@ class TemplateMatchingMethod(Enum):
     CORRELATION_COEFFICIENT_NORMALIZED = cv2.TM_CCOEFF_NORMED
 
 
+class TemplateMatch:
+    def __init__(self, top_left, bottom_right):
+        self.top_left = top_left
+        self.bottom_right = bottom_right
+        self.mid_point = self.__calculate_midpoint(top_left, bottom_right)
+
+    @staticmethod
+    def __calculate_midpoint(point1, point2):
+        return int(round((point1[0] + point2[0]) / 2)), int(round((point1[1] + point2[1]) / 2))
+
+
 class CVController:
     def __init__(self):
         self.screen = mss()
@@ -42,6 +53,9 @@ class CVController:
     def load_frame(self, frame_path: str):
         logging.debug("Loading frame from file '%s'.", frame_path)
         self.frame = cv2.imread(frame_path, cv2.IMREAD_COLOR)
+
+    def crop_frame(self, top_left, bottom_right):
+        self.frame = self.frame[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]].copy()
 
     def find_text(self, image=None, pre_processing_chain: image_processing.ImageProcessingStepChain = None):
         if image is None:
@@ -108,7 +122,7 @@ class CVController:
             cv2.rectangle(frame_copy, top_left, bottom_right, 255, 2)
             self.render_image(frame_copy)
 
-        return self.__calculate_midpoint(top_left, bottom_right)
+        return TemplateMatch(top_left, bottom_right)
 
     @staticmethod
     def split_out_alpha_mask(image):
@@ -123,6 +137,9 @@ class CVController:
         else:
             return {'mask_present': False, 'image': image}
 
+    def render_frame(self):
+        self.render_image(self.frame)
+
     @staticmethod
     def render_image(image):
         pyplot.imshow(image, cmap='gray')
@@ -135,7 +152,3 @@ class CVController:
     @staticmethod
     def __convert_rgb_to_bgr(image):
         return image[:, :, ::-1]
-
-    @staticmethod
-    def __calculate_midpoint(point1, point2):
-        return int(round((point1[0] + point2[0]) / 2)), int(round((point1[1] + point2[1]) / 2))
