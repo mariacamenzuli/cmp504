@@ -10,9 +10,9 @@ def test_find_template_match_square_difference_when_match_exists():
                                         method=cmp504.computer_vision.TemplateMatchingMethod.SQUARE_DIFFERENCE_NORMALIZED)
 
     assert_that(match).is_not_none()
-    assert_that(match.top_left).is_equal_to((246, 303))
-    assert_that(match.bottom_right).is_equal_to((310, 389))
-    assert_that(match.mid_point).is_equal_to((278, 346))
+    assert_that(match.top_left).is_equal_to((247, 305))
+    assert_that(match.bottom_right).is_equal_to((311, 391))
+    assert_that(match.mid_point).is_equal_to((279, 348))
 
 
 def test_find_template_match_square_difference_when_match_does_not_exist():
@@ -33,9 +33,9 @@ def test_find_template_match_correlation_coefficient_when_match_exists():
                                          method=cmp504.computer_vision.TemplateMatchingMethod.CORRELATION_COEFFICIENT_NORMALIZED)
 
     assert_that(match).is_not_none()
-    assert_that(match.top_left).is_equal_to((246, 303))
-    assert_that(match.bottom_right).is_equal_to((310, 389))
-    assert_that(match.mid_point).is_equal_to((278, 346))
+    assert_that(match.top_left).is_equal_to((247, 305))
+    assert_that(match.bottom_right).is_equal_to((311, 391))
+    assert_that(match.mid_point).is_equal_to((279, 348))
 
 
 def test_find_template_match_correlation_coefficient_when_match_does_not_exist():
@@ -56,9 +56,9 @@ def test_find_template_match_cross_correlation_when_match_exists():
                                         method=cmp504.computer_vision.TemplateMatchingMethod.CROSS_CORRELATION_NORMALIZED)
 
     assert_that(match).is_not_none()
-    assert_that(match.top_left).is_equal_to((246, 303))
-    assert_that(match.bottom_right).is_equal_to((310, 389))
-    assert_that(match.mid_point).is_equal_to((278, 346))
+    assert_that(match.top_left).is_equal_to((247, 305))
+    assert_that(match.bottom_right).is_equal_to((311, 391))
+    assert_that(match.mid_point).is_equal_to((279, 348))
 
 
 def test_find_template_match_cross_correlation_when_match_does_not_exist():
@@ -79,9 +79,9 @@ def test_find_template_match_with_transparent_template_when_match_exists():
                                         method=cmp504.computer_vision.TemplateMatchingMethod.CROSS_CORRELATION_NORMALIZED)
 
     assert_that(match).is_not_none()
-    assert_that(match.top_left).is_equal_to((246, 303))
-    assert_that(match.bottom_right).is_equal_to((310, 389))
-    assert_that(match.mid_point).is_equal_to((278, 346))
+    assert_that(match.top_left).is_equal_to((247, 305))
+    assert_that(match.bottom_right).is_equal_to((311, 391))
+    assert_that(match.mid_point).is_equal_to((279, 348))
 
 
 def test_find_template_matches():
