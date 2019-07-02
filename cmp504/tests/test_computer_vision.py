@@ -84,6 +84,35 @@ def test_find_template_match_with_transparent_template_when_match_exists():
     assert_that(match.mid_point).is_equal_to((278, 346))
 
 
+def test_find_template_matches():
+    cv_ctrl = cmp504.computer_vision.CVController()
+    cv_ctrl.load_frame("cmp504/data/test/mario_screenshot.png")
+    matches = cv_ctrl.find_template_matches("cmp504/data/test/mario_coin.png",
+                                            threshold=0.98,
+                                            method=cmp504.computer_vision.TemplateMatchingMethod.CROSS_CORRELATION_NORMALIZED)
+
+    assert_that(matches).is_not_empty()
+    assert_that(matches).contains_only(cmp504.computer_vision.TemplateMatch((73, 82), (82, 96)),
+                                       cmp504.computer_vision.TemplateMatch((87, 82), (96, 96)),
+                                       cmp504.computer_vision.TemplateMatch((101, 82), (110, 96)),
+                                       cmp504.computer_vision.TemplateMatch((115, 82), (124, 96)),
+                                       cmp504.computer_vision.TemplateMatch((129, 82), (138, 96)),
+                                       cmp504.computer_vision.TemplateMatch((59, 114), (68, 128)),
+                                       cmp504.computer_vision.TemplateMatch((73, 114), (82, 128)),
+                                       cmp504.computer_vision.TemplateMatch((87, 114), (96, 128)),
+                                       cmp504.computer_vision.TemplateMatch((101, 114), (110, 128)),
+                                       cmp504.computer_vision.TemplateMatch((115, 114), (124, 128)),
+                                       cmp504.computer_vision.TemplateMatch((129, 114), (138, 128)),
+                                       cmp504.computer_vision.TemplateMatch((143, 114), (152, 128)),
+                                       cmp504.computer_vision.TemplateMatch((59, 146), (68, 160)),
+                                       cmp504.computer_vision.TemplateMatch((73, 146), (82, 160)),
+                                       cmp504.computer_vision.TemplateMatch((87, 146), (96, 160)),
+                                       cmp504.computer_vision.TemplateMatch((101, 146), (110, 160)),
+                                       cmp504.computer_vision.TemplateMatch((115, 146), (124, 160)),
+                                       cmp504.computer_vision.TemplateMatch((129, 146), (138, 160)),
+                                       cmp504.computer_vision.TemplateMatch((143, 146), (152, 160)))
+
+
 def test_find_text_in_frame_with_no_preprocessing():
     cv_ctrl = cmp504.computer_vision.CVController()
     cv_ctrl.load_frame("cmp504/data/test/wargroove_text_panel.png")

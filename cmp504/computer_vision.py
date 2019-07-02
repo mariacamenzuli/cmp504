@@ -1,12 +1,14 @@
 import logging
-import cv2
-import pytesseract
+from dataclasses import dataclass
+from enum import Enum
+
 import cmp504.image_processing as image_processing
+import cv2
 import numpy as np
-from mss import mss
+import pytesseract
 from PIL import Image
 from matplotlib import pyplot
-from enum import Enum
+from mss import mss
 
 
 class TemplateMatchingMethod(Enum):
@@ -18,11 +20,13 @@ class TemplateMatchingMethod(Enum):
     CORRELATION_COEFFICIENT_NORMALIZED = cv2.TM_CCOEFF_NORMED
 
 
+@dataclass
 class TemplateMatch:
-    def __init__(self, top_left, bottom_right):
-        self.top_left = top_left
-        self.bottom_right = bottom_right
-        self.mid_point = self.__calculate_midpoint(top_left, bottom_right)
+    top_left: (int, int)
+    bottom_right: (int, int)
+
+    def __post_init__(self):
+        self.field_b = self.mid_point = self.__calculate_midpoint(self.top_left, self.bottom_right)
 
     @staticmethod
     def __calculate_midpoint(point1, point2):
@@ -68,7 +72,51 @@ class CVController:
 
         return pytesseract.image_to_string(target_image)
 
-    # todo: add method to find all matches
+    def find_template_matches(self,
+                              template_path: str,
+                              threshold: float = 0.9,
+                              method: TemplateMatchingMethod = TemplateMatchingMethod.CORRELATION_COEFFICIENT_NORMALIZED,
+                              render_matches: bool = False):
+        logging.debug("Looking for template match using template from file '%s', threshold %f, and matching method %s.",
+                      template_path,
+                      threshold,
+                      method.name)
+        self.assert_controller_has_frame()
+
+        template = cv2.imread(template_path, cv2.IMREAD_UNCHANGED)
+        template_height = template.shape[0]
+        template_width = template.shape[1]
+
+        template_split = self.split_out_alpha_mask(template)
+        if template_split['mask_present'] is True:
+            match_result = cv2.matchTemplate(self.frame, template_split['image'], method.value, template_split['mask'])
+        else:
+            match_result = cv2.matchTemplate(self.frame, template_split['image'], method.value)
+
+        # The best match for SQUARE_DIFFERENCE and SQUARE_DIFFERENCE_NORMALIZED is the global minimum value.
+        # The best match for the other methods is the global maximum value.
+        if method in [TemplateMatchingMethod.SQUARE_DIFFERENCE,
+                      TemplateMatchingMethod.SQUARE_DIFFERENCE_NORMALIZED]:
+            match_locations = np.where(match_result <= threshold)
+        else:
+            match_locations = np.where(match_result >= threshold)
+
+        frame_copy = self.frame.copy()
+        matches = []
+        for match_location in zip(*match_locations[::-1]):
+            matches.append(TemplateMatch(match_location,
+                                         (match_location[0] + template_width, match_location[1] + template_height)))
+            cv2.rectangle(frame_copy,
+                          match_location,
+                          (match_location[0] + template_width, match_location[1] + template_height),
+                          255,
+                          2)
+
+        if render_matches:
+            self.render_image(frame_copy)
+
+        return matches
+
     def find_template_match(self,
                             template_path: str,
                             threshold: float = 0.9,
@@ -96,14 +144,14 @@ class CVController:
         # The best match for the other methods is the global maximum value.
         if method in [TemplateMatchingMethod.SQUARE_DIFFERENCE, TemplateMatchingMethod.SQUARE_DIFFERENCE_NORMALIZED]:
             logging.info("Minimum match value was %f.", min_value)
-            if min_value > threshold:
+            if min_value >= threshold:
                 logging.info("No match found.")
                 return None
 
             top_left = min_location
         else:
             logging.info("Maximum match value was %f.", max_value)
-            if max_value < threshold:
+            if max_value <= threshold:
                 logging.info("No match found.")
                 return None
 
