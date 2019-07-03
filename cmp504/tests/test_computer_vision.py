@@ -137,3 +137,15 @@ def test_find_text_in_frame_with_preprocessing():
 
     assert_that(result).contains("Income")
     assert_that(result).contains("Stronghold")
+
+
+def test_something():
+    cv_ctrl = cmp504.computer_vision.CVController()
+    cv_ctrl.load_frame("cmp504/data/test/wargroove_screenshot_mirrored_commander.png")
+    match = cv_ctrl.find_template_match_hu_moments("cmp504/data/test/wargroove_commander_portrait.png",
+                                                   render_match=True)
+
+    assert_that(match).is_not_none()
+    # assert_that(match.top_left).is_equal_to((247, 305))
+    # assert_that(match.bottom_right).is_equal_to((311, 391))
+    # assert_that(match.mid_point).is_equal_to((279, 348))

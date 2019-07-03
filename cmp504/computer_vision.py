@@ -172,6 +172,76 @@ class CVController:
 
         return TemplateMatch(top_left, bottom_right)
 
+    def find_template_match_hu_moments(self,
+                                       template_path: str,
+                                       threshold: float = 1.0,
+                                       binarization_threshold: int = 127,
+                                       render_match: bool = False):
+        self.assert_controller_has_frame()
+
+        template = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
+        template = image_processing.Threshold(binarization_threshold).process(template)
+        template = image_processing.Invert().process(template)
+        template_height = template.shape[0]
+        template_width = template.shape[1]
+
+        target_image = image_processing.BGR2Grayscale().process(self.frame)
+        target_image = image_processing.Threshold(binarization_threshold).process(target_image)
+        target_image = image_processing.Invert().process(target_image)
+
+        # self.render_image(template, 'Template')
+        # self.render_image(target_image, 'Target Image')
+
+        target_image_height = target_image.shape[0]
+        target_image_width = target_image.shape[1]
+
+        if template_height > target_image_height or template_width > target_image_width:
+            return None
+
+        min_distance_found = 999999999
+        min_top_left = (0, 0)
+        min_bottom_right = (0, 0)
+        match_found = False
+
+        template_contours, _ = cv2.findContours(template, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        for x in range(0, target_image_width - template_width + 1):
+            for y in range(0, target_image_height - template_height + 1):
+                top_left = (x, y)
+                bottom_right = (x + template_width, y + template_height)
+
+                target_image_contours, _ = cv2.findContours(target_image[top_left[1]:bottom_right[1],
+                                                                         top_left[0]:bottom_right[0]],
+                                                            cv2.RETR_EXTERNAL,
+                                                            cv2.CHAIN_APPROX_SIMPLE)
+
+                if target_image_contours is not None and len(target_image_contours) > 0:
+                    distance = cv2.matchShapes(template_contours[0],
+                                               target_image_contours[0],
+                                               cv2.CONTOURS_MATCH_I1,
+                                               1)
+
+                    if distance < min_distance_found:
+                        # self.render_image((target_image[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]))
+                        match_found = True
+                        min_distance_found = distance
+                        min_top_left = top_left
+                        min_bottom_right = bottom_right
+
+        if render_match and match_found:
+            frame_copy = self.frame.copy()
+            cv2.rectangle(frame_copy, min_top_left, min_bottom_right, 255, 2)
+            self.render_image(frame_copy,
+                              'Match top left (%d, %d), bottom right (%d, %d)' % (min_top_left[0],
+                                                                                  min_top_left[1],
+                                                                                  min_bottom_right[0],
+                                                                                  min_bottom_right[1]))
+
+        if match_found and min_distance_found <= threshold:
+            return TemplateMatch(min_top_left, min_bottom_right)
+        else:
+            return None
+
     @staticmethod
     def split_out_alpha_mask(image):
         if image.shape[2] > 3:
@@ -189,9 +259,9 @@ class CVController:
         self.render_image(self.frame)
 
     @staticmethod
-    def render_image(image):
+    def render_image(image, title='Image Display'):
         pyplot.imshow(image, cmap='gray')
-        pyplot.title('Template Match'), pyplot.xticks([]), pyplot.yticks([])
+        pyplot.title(title), pyplot.xticks([]), pyplot.yticks([])
         pyplot.show()
 
     def assert_controller_has_frame(self):

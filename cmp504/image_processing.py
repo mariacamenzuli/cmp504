@@ -53,8 +53,15 @@ class GaussianBlur(ImageProcessingStep):
 
 
 class Threshold(ImageProcessingStep):
+    def __init__(self, threshold: int):
+        self.threshold = threshold
+
     def process(self, image):
-        # return cv2.threshold(image, 0, 255, cv2.THRESH_BINARY)[1]
+        return cv2.threshold(image, self.threshold, 255, cv2.THRESH_BINARY)[1]
+
+
+class AdaptiveThreshold(ImageProcessingStep):
+    def process(self, image):
         return cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
 
 
