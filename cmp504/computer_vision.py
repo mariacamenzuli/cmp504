@@ -174,8 +174,9 @@ class CVController:
 
     def find_template_match_hu_moments(self,
                                        template_path: str,
-                                       threshold: float = 1.0,
+                                       threshold: float = 0.5,
                                        binarization_threshold: int = 127,
+                                       stopping_threshold: float = 0,
                                        render_match: bool = False):
         self.assert_controller_has_frame()
 
@@ -206,7 +207,13 @@ class CVController:
         template_contours, _ = cv2.findContours(template, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         for x in range(0, target_image_width - template_width + 1):
+            if min_distance_found <= stopping_threshold:
+                break
+
             for y in range(0, target_image_height - template_height + 1):
+                if min_distance_found <= stopping_threshold:
+                    break
+
                 top_left = (x, y)
                 bottom_right = (x + template_width, y + template_height)
 
@@ -222,7 +229,6 @@ class CVController:
                                                1)
 
                     if distance < min_distance_found:
-                        # self.render_image((target_image[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]))
                         match_found = True
                         min_distance_found = distance
                         min_top_left = top_left
@@ -232,10 +238,11 @@ class CVController:
             frame_copy = self.frame.copy()
             cv2.rectangle(frame_copy, min_top_left, min_bottom_right, 255, 2)
             self.render_image(frame_copy,
-                              'Match top left (%d, %d), bottom right (%d, %d)' % (min_top_left[0],
-                                                                                  min_top_left[1],
-                                                                                  min_bottom_right[0],
-                                                                                  min_bottom_right[1]))
+                              'Match top left (%d, %d), bottom right (%d, %d), distance %03.2f' % (min_top_left[0],
+                                                                                                   min_top_left[1],
+                                                                                                   min_bottom_right[0],
+                                                                                                   min_bottom_right[1],
+                                                                                                   min_distance_found))
 
         if match_found and min_distance_found <= threshold:
             return TemplateMatch(min_top_left, min_bottom_right)

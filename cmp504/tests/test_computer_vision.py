@@ -139,13 +139,25 @@ def test_find_text_in_frame_with_preprocessing():
     assert_that(result).contains("Stronghold")
 
 
-def test_something():
+def test_find_template_match_hu_moments_finds_untransformed_match():
+    cv_ctrl = cmp504.computer_vision.CVController()
+    cv_ctrl.load_frame("cmp504/data/test/wargroove_screenshot.png")
+    match = cv_ctrl.find_template_match_hu_moments("cmp504/data/test/wargroove_commander_portrait.png",
+                                                   binarization_threshold=200)
+
+    assert_that(match).is_not_none()
+    assert_that(match.top_left).is_equal_to((13, 13))
+    assert_that(match.bottom_right).is_equal_to((84, 86))
+    assert_that(match.mid_point).is_equal_to((48, 50))
+
+
+def test_find_template_match_hu_moments_finds_mirrored_match():
     cv_ctrl = cmp504.computer_vision.CVController()
     cv_ctrl.load_frame("cmp504/data/test/wargroove_screenshot_mirrored_commander.png")
     match = cv_ctrl.find_template_match_hu_moments("cmp504/data/test/wargroove_commander_portrait.png",
-                                                   render_match=True)
+                                                   binarization_threshold=200)
 
     assert_that(match).is_not_none()
-    # assert_that(match.top_left).is_equal_to((247, 305))
-    # assert_that(match.bottom_right).is_equal_to((311, 391))
-    # assert_that(match.mid_point).is_equal_to((279, 348))
+    assert_that(match.top_left).is_equal_to((1190, 13))
+    assert_that(match.bottom_right).is_equal_to((1261, 86))
+    assert_that(match.mid_point).is_equal_to((1226, 50))
