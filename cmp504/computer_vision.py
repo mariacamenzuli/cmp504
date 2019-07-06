@@ -76,27 +76,24 @@ class CVController:
                               template_path: str,
                               threshold: float = 0.9,
                               method: TemplateMatchingMethod = TemplateMatchingMethod.CORRELATION_COEFFICIENT_NORMALIZED,
+                              template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
+                              frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
                               render_matches: bool = False):
         logging.debug("Looking for template match using template from file '%s', threshold %f, and matching method %s.",
                       template_path,
                       threshold,
                       method.name)
-        self.assert_controller_has_frame()
 
         template = cv2.imread(template_path, cv2.IMREAD_UNCHANGED)
         template_height = template.shape[0]
         template_width = template.shape[1]
 
-        template_split = self.split_out_alpha_mask(template)
-        if template_split['mask_present'] is True:
-            match_result = cv2.matchTemplate(self.frame, template_split['image'], method.value, template_split['mask'])
-        else:
-            match_result = cv2.matchTemplate(self.frame, template_split['image'], method.value)
+        match_result = self.__match_template(template,
+                                             method,
+                                             template_pre_processing_chain,
+                                             frame_pre_processing_chain)
 
-        # The best match for SQUARE_DIFFERENCE and SQUARE_DIFFERENCE_NORMALIZED is the global minimum value.
-        # The best match for the other methods is the global maximum value.
-        if method in [TemplateMatchingMethod.SQUARE_DIFFERENCE,
-                      TemplateMatchingMethod.SQUARE_DIFFERENCE_NORMALIZED]:
+        if self.is_best_match_the_global_minimum(method):
             match_locations = np.where(match_result <= threshold)
         else:
             match_locations = np.where(match_result >= threshold)
@@ -121,28 +118,26 @@ class CVController:
                             template_path: str,
                             threshold: float = 0.9,
                             method: TemplateMatchingMethod = TemplateMatchingMethod.CORRELATION_COEFFICIENT_NORMALIZED,
+                            template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
+                            frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
                             render_match: bool = False):
         logging.debug("Looking for template match using template from file '%s', threshold %f, and matching method %s.",
                       template_path,
                       threshold,
                       method.name)
-        self.assert_controller_has_frame()
 
         template = cv2.imread(template_path, cv2.IMREAD_UNCHANGED)
         template_height = template.shape[0]
         template_width = template.shape[1]
 
-        template_split = self.split_out_alpha_mask(template)
-        if template_split['mask_present'] is True:
-            match_result = cv2.matchTemplate(self.frame, template_split['image'], method.value, template_split['mask'])
-        else:
-            match_result = cv2.matchTemplate(self.frame, template_split['image'], method.value)
+        match_result = self.__match_template(template,
+                                             method,
+                                             template_pre_processing_chain,
+                                             frame_pre_processing_chain)
 
         min_value, max_value, min_location, max_location = cv2.minMaxLoc(match_result)
 
-        # The best match for SQUARE_DIFFERENCE and SQUARE_DIFFERENCE_NORMALIZED is the global minimum value.
-        # The best match for the other methods is the global maximum value.
-        if method in [TemplateMatchingMethod.SQUARE_DIFFERENCE, TemplateMatchingMethod.SQUARE_DIFFERENCE_NORMALIZED]:
+        if self.is_best_match_the_global_minimum(method):
             logging.info("Minimum match value was %f.", min_value)
             if min_value >= threshold:
                 logging.info("No match found.")
@@ -178,7 +173,7 @@ class CVController:
                                        binarization_threshold: int = 127,
                                        stopping_threshold: float = 0,
                                        render_match: bool = False):
-        self.assert_controller_has_frame()
+        self.__assert_controller_has_frame()
 
         template = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
         template = image_processing.Threshold(binarization_threshold).process(template)
@@ -250,7 +245,7 @@ class CVController:
             return None
 
     @staticmethod
-    def split_out_alpha_mask(image):
+    def __split_out_alpha_mask(image):
         if image.shape[2] > 3:
             logging.debug('Alpha channel detected in image. Splitting out mask.')
             channels = cv2.split(image)
@@ -271,7 +266,34 @@ class CVController:
         pyplot.title(title), pyplot.xticks([]), pyplot.yticks([])
         pyplot.show()
 
-    def assert_controller_has_frame(self):
+    @staticmethod
+    def is_best_match_the_global_minimum(method: TemplateMatchingMethod):
+        # The best match for SQUARE_DIFFERENCE and SQUARE_DIFFERENCE_NORMALIZED is the global minimum value.
+        # The best match for the other methods is the global maximum value.
+        return method in [TemplateMatchingMethod.SQUARE_DIFFERENCE, TemplateMatchingMethod.SQUARE_DIFFERENCE_NORMALIZED]
+
+    def __match_template(self,
+                         template,
+                         method: TemplateMatchingMethod = TemplateMatchingMethod.CORRELATION_COEFFICIENT_NORMALIZED,
+                         template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
+                         frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None):
+        self.__assert_controller_has_frame()
+
+        template_split = self.__split_out_alpha_mask(template)
+
+        target_image = self.frame
+        if template_pre_processing_chain is not None:
+            template_split['image'] = template_pre_processing_chain.apply(template_split['image'])
+
+        if template_pre_processing_chain is not None:
+            target_image = frame_pre_processing_chain.apply(self.frame)
+
+        if template_split['mask_present'] is True:
+            return cv2.matchTemplate(target_image, template_split['image'], method.value, template_split['mask'])
+        else:
+            return cv2.matchTemplate(target_image, template_split['image'], method.value)
+
+    def __assert_controller_has_frame(self):
         assert (self.frame is not None), "A frame is required. Use 'capture_frame' or 'load_frame' to prepare frame."
 
     @staticmethod

@@ -53,7 +53,7 @@ class GaussianBlur(ImageProcessingStep):
 
 
 class Threshold(ImageProcessingStep):
-    def __init__(self, threshold: int):
+    def __init__(self, threshold: int = 127):
         self.threshold = threshold
 
     def process(self, image):

@@ -84,6 +84,27 @@ def test_find_template_match_with_transparent_template_when_match_exists():
     assert_that(match.mid_point).is_equal_to((279, 348))
 
 
+def test_find_template_match_with_preprocessing():
+    cv_ctrl = cmp504.computer_vision.CVController()
+    cv_ctrl.load_frame("cmp504/data/test/wargroove_screenshot_highlighted_button.png")
+    frame_pre_processing_steps = cmp504.image_processing.ImageProcessingStepChain()
+    frame_pre_processing_steps.append(cmp504.image_processing.BGR2Grayscale())
+    frame_pre_processing_steps.append(cmp504.image_processing.Threshold(90))
+    template_pre_processing_steps = cmp504.image_processing.ImageProcessingStepChain()
+    template_pre_processing_steps.append(cmp504.image_processing.BGR2Grayscale())
+    template_pre_processing_steps.append(cmp504.image_processing.Threshold(180))
+    match = cv_ctrl.find_template_match("cmp504/data/test/wargroove_button_normal_state.png",
+                                        threshold=0.8,
+                                        method=cmp504.computer_vision.TemplateMatchingMethod.CROSS_CORRELATION_NORMALIZED,
+                                        template_pre_processing_chain=template_pre_processing_steps,
+                                        frame_pre_processing_chain=frame_pre_processing_steps)
+
+    assert_that(match).is_not_none()
+    assert_that(match.top_left).is_equal_to((490, 450))
+    assert_that(match.bottom_right).is_equal_to((790, 484))
+    assert_that(match.mid_point).is_equal_to((640, 467))
+
+
 def test_find_template_matches():
     cv_ctrl = cmp504.computer_vision.CVController()
     cv_ctrl.load_frame("cmp504/data/test/mario_screenshot.png")
