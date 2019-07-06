@@ -35,5 +35,17 @@ class MouseController:
     def left_mouse_click(self):
         self.mouse.click(Button.left)
 
+    def left_mouse_press(self):
+        self.mouse.press(Button.left)
+
+    def left_mouse_release(self):
+        self.mouse.release(Button.left)
+
     def right_mouse_click(self):
         self.mouse.click(Button.right)
+
+    def right_mouse_press(self):
+        self.mouse.press(Button.right)
+
+    def right_mouse_release(self):
+        self.mouse.release(Button.right)
