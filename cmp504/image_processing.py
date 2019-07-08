@@ -68,3 +68,8 @@ class AdaptiveThreshold(ImageProcessingStep):
 class Invert(ImageProcessingStep):
     def process(self, image):
         return cv2.bitwise_not(image)
+
+
+class FlipHorizontal(ImageProcessingStep):
+    def process(self, image):
+        return cv2.flip(image, 1)

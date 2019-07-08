@@ -120,6 +120,7 @@ class CVController:
                             method: TemplateMatchingMethod = TemplateMatchingMethod.CORRELATION_COEFFICIENT_NORMALIZED,
                             template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
                             frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
+                            match_horizontal_mirror: bool = False,
                             render_match: bool = False):
         logging.debug("Looking for template match using template from file '%s', threshold %f, and matching method %s.",
                       template_path,
@@ -130,12 +131,30 @@ class CVController:
         template_height = template.shape[0]
         template_width = template.shape[1]
 
-        match_result = self.__match_template(template,
-                                             method,
-                                             template_pre_processing_chain,
-                                             frame_pre_processing_chain)
+        match_result_1 = self.__match_template(template,
+                                               method,
+                                               template_pre_processing_chain,
+                                               frame_pre_processing_chain)
 
-        min_value, max_value, min_location, max_location = cv2.minMaxLoc(match_result)
+        min_value, max_value, min_location, max_location = cv2.minMaxLoc(match_result_1)
+
+        if match_horizontal_mirror:
+            template_flipped_horizontally = image_processing.FlipHorizontal().process(template)
+
+            match_result_2 = self.__match_template(template_flipped_horizontally,
+                                                   method,
+                                                   template_pre_processing_chain,
+                                                   frame_pre_processing_chain)
+
+            min_value2, max_value2, min_location2, max_location2 = cv2.minMaxLoc(match_result_2)
+
+            if min_value2 < min_value:
+                min_value = min_value2
+                min_location = min_location2
+
+            if max_value2 > max_value:
+                max_value = max_value2
+                max_location = max_location2
 
         if self.is_best_match_the_global_minimum(method):
             logging.info("Minimum match value was %f.", min_value)
