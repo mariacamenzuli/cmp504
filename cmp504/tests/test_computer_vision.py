@@ -196,3 +196,33 @@ def test_find_template_match_hu_moments_finds_mirrored_match():
     assert_that(match.top_left).is_equal_to((1190, 13))
     assert_that(match.bottom_right).is_equal_to((1261, 86))
     assert_that(match.mid_point).is_equal_to((1226, 50))
+
+
+def test_find_best_feature_based_match_sift():
+    cv_ctrl = cmp504.computer_vision.CVController()
+    cv_ctrl.load_frame("cmp504/data/test/wargroove_screenshot.png")
+    best_match = cv_ctrl.find_best_feature_based_match_sift("cmp504/data/test/wargroove_commander_unit_mercia.png")
+
+    assert_that(best_match).is_not_none()
+    assert_that(best_match[0]).is_between(450, 490)
+    assert_that(best_match[1]).is_between(265, 320)
+
+
+def test_find_best_feature_based_match_surf():
+    cv_ctrl = cmp504.computer_vision.CVController()
+    cv_ctrl.load_frame("cmp504/data/test/wargroove_screenshot.png")
+    best_match = cv_ctrl.find_best_feature_based_match_surf("cmp504/data/test/wargroove_commander_unit_mercia.png")
+
+    assert_that(best_match).is_not_none()
+    assert_that(best_match[0]).is_between(450, 490)
+    assert_that(best_match[1]).is_between(265, 320)
+
+
+def test_find_best_feature_based_match_orb():
+    cv_ctrl = cmp504.computer_vision.CVController()
+    cv_ctrl.load_frame("cmp504/data/test/wargroove_screenshot.png")
+    best_match = cv_ctrl.find_best_feature_based_match_orb("cmp504/data/test/wargroove_commander_unit_mercia.png")
+
+    assert_that(best_match).is_not_none()
+    assert_that(best_match[0]).is_between(450, 490)
+    assert_that(best_match[1]).is_between(265, 320)

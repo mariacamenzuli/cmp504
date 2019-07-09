@@ -218,7 +218,7 @@ class CVController:
         min_bottom_right = (0, 0)
         match_found = False
 
-        template_contours, _ = cv2.findContours(template, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        _, template_contours, _ = cv2.findContours(template, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         for x in range(0, target_image_width - template_width + 1):
             if min_distance_found <= stopping_threshold:
@@ -231,10 +231,10 @@ class CVController:
                 top_left = (x, y)
                 bottom_right = (x + template_width, y + template_height)
 
-                target_image_contours, _ = cv2.findContours(target_image[top_left[1]:bottom_right[1],
-                                                                         top_left[0]:bottom_right[0]],
-                                                            cv2.RETR_EXTERNAL,
-                                                            cv2.CHAIN_APPROX_SIMPLE)
+                _, target_image_contours, _ = cv2.findContours(target_image[top_left[1]:bottom_right[1],
+                                                               top_left[0]:bottom_right[0]],
+                                                               cv2.RETR_EXTERNAL,
+                                                               cv2.CHAIN_APPROX_SIMPLE)
 
                 if target_image_contours is not None and len(target_image_contours) > 0:
                     distance = cv2.matchShapes(template_contours[0],
@@ -262,6 +262,65 @@ class CVController:
             return TemplateMatch(min_top_left, min_bottom_right)
         else:
             return None
+
+    def find_best_feature_based_match_sift(self, template_path: str):
+        self.__assert_controller_has_frame()
+
+        template = cv2.imread(template_path, cv2.IMREAD_COLOR)
+        # template = image_processing.Resize(2, 2).process(template)
+
+        return self.find_best_feature_based_match(template,
+                                                  cv2.xfeatures2d.SIFT_create(),
+                                                  cv2.NORM_L2)
+
+    def find_best_feature_based_match_surf(self, template_path: str):
+        self.__assert_controller_has_frame()
+
+        template = cv2.imread(template_path, cv2.IMREAD_COLOR)
+        # template = image_processing.Resize(2, 2).process(template)
+
+        return self.find_best_feature_based_match(template,
+                                                  cv2.xfeatures2d.SURF_create(),
+                                                  cv2.NORM_L2)
+
+    def find_best_feature_based_match_orb(self, template_path: str):
+        self.__assert_controller_has_frame()
+
+        template = cv2.imread(template_path, cv2.IMREAD_COLOR)
+        template = image_processing.Resize(2, 2).process(template)
+
+        return self.find_best_feature_based_match(template,
+                                                  cv2.ORB_create(),
+                                                  cv2.NORM_HAMMING)
+
+    def find_best_feature_based_match(self,
+                                      template,
+                                      detector,
+                                      distance_measure):
+        key_points_template, descriptors_template = detector.detectAndCompute(template, None)
+        key_points_target, descriptors_target = detector.detectAndCompute(self.frame, None)
+
+        brute_force_matcher = cv2.BFMatcher(distance_measure, crossCheck=True)
+        matches = brute_force_matcher.match(descriptors_template, descriptors_target)
+        matches = sorted(matches, key=lambda x: x.distance)
+
+        # matching_result = cv2.drawMatches(template,
+        #                                   key_points_template,
+        #                                   self.frame,
+        #                                   key_points_target,
+        #                                   matches[:5],
+        #                                   None)
+        # cv2.imshow("Matches", matching_result)
+        #
+        # image = cv2.drawKeypoints(template, key_points_template, None)
+        #
+        # self.render_image(image)
+
+        if not matches:
+            return None
+        else:
+            return (int(key_points_target[matches[0].trainIdx].pt[0]),
+                    int(key_points_target[matches[0].trainIdx].pt[1]))
 
     @staticmethod
     def __split_out_alpha_mask(image):
