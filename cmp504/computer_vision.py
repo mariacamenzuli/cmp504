@@ -26,7 +26,7 @@ class TemplateMatch:
     bottom_right: (int, int)
 
     def __post_init__(self):
-        self.field_b = self.mid_point = self.__calculate_midpoint(self.top_left, self.bottom_right)
+        self.mid_point = self.__calculate_midpoint(self.top_left, self.bottom_right)
 
     @staticmethod
     def __calculate_midpoint(point1, point2):
