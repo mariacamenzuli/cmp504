@@ -269,9 +269,9 @@ class CVController:
         template = cv2.imread(template_path, cv2.IMREAD_COLOR)
         # template = image_processing.Resize(2, 2).process(template)
 
-        return self.find_best_feature_based_match(template,
-                                                  cv2.xfeatures2d.SIFT_create(),
-                                                  cv2.NORM_L2)
+        return self.__find_best_feature_based_match(template,
+                                                    cv2.xfeatures2d.SIFT_create(),
+                                                    cv2.NORM_L2)
 
     def find_best_feature_based_match_surf(self, template_path: str):
         self.__assert_controller_has_frame()
@@ -279,9 +279,9 @@ class CVController:
         template = cv2.imread(template_path, cv2.IMREAD_COLOR)
         # template = image_processing.Resize(2, 2).process(template)
 
-        return self.find_best_feature_based_match(template,
-                                                  cv2.xfeatures2d.SURF_create(),
-                                                  cv2.NORM_L2)
+        return self.__find_best_feature_based_match(template,
+                                                    cv2.xfeatures2d.SURF_create(),
+                                                    cv2.NORM_L2)
 
     def find_best_feature_based_match_orb(self, template_path: str):
         self.__assert_controller_has_frame()
@@ -289,14 +289,14 @@ class CVController:
         template = cv2.imread(template_path, cv2.IMREAD_COLOR)
         template = image_processing.Resize(2, 2).process(template)
 
-        return self.find_best_feature_based_match(template,
-                                                  cv2.ORB_create(),
-                                                  cv2.NORM_HAMMING)
+        return self.__find_best_feature_based_match(template,
+                                                    cv2.ORB_create(),
+                                                    cv2.NORM_HAMMING)
 
-    def find_best_feature_based_match(self,
-                                      template,
-                                      detector,
-                                      distance_measure):
+    def __find_best_feature_based_match(self,
+                                        template,
+                                        detector,
+                                        distance_measure):
         key_points_template, descriptors_template = detector.detectAndCompute(template, None)
         key_points_target, descriptors_target = detector.detectAndCompute(self.frame, None)
 
@@ -363,7 +363,7 @@ class CVController:
         if template_pre_processing_chain is not None:
             template_split['image'] = template_pre_processing_chain.apply(template_split['image'])
 
-        if template_pre_processing_chain is not None:
+        if frame_pre_processing_chain is not None:
             target_image = frame_pre_processing_chain.apply(self.frame)
 
         if template_split['mask_present'] is True:
