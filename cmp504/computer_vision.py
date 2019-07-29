@@ -75,7 +75,7 @@ class CVController:
     def find_template_matches(self,
                               template_path: str,
                               threshold: float = 0.9,
-                              method: TemplateMatchingMethod = TemplateMatchingMethod.CORRELATION_COEFFICIENT_NORMALIZED,
+                              method: TemplateMatchingMethod = TemplateMatchingMethod.CROSS_CORRELATION_NORMALIZED,
                               template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
                               frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
                               render_matches: bool = False):
@@ -117,7 +117,7 @@ class CVController:
     def find_template_match(self,
                             template_path: str,
                             threshold: float = 0.9,
-                            method: TemplateMatchingMethod = TemplateMatchingMethod.CORRELATION_COEFFICIENT_NORMALIZED,
+                            method: TemplateMatchingMethod = TemplateMatchingMethod.CROSS_CORRELATION_NORMALIZED,
                             template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
                             frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
                             match_horizontal_mirror: bool = False,
@@ -218,8 +218,6 @@ class CVController:
         min_bottom_right = (0, 0)
         match_found = False
 
-        _, template_contours, _ = cv2.findContours(template, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
         for x in range(0, target_image_width - template_width + 1):
             if min_distance_found <= stopping_threshold:
                 break
@@ -231,22 +229,16 @@ class CVController:
                 top_left = (x, y)
                 bottom_right = (x + template_width, y + template_height)
 
-                _, target_image_contours, _ = cv2.findContours(target_image[top_left[1]:bottom_right[1],
-                                                               top_left[0]:bottom_right[0]],
-                                                               cv2.RETR_EXTERNAL,
-                                                               cv2.CHAIN_APPROX_SIMPLE)
+                distance = cv2.matchShapes(template,
+                                           target_image[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]],
+                                           cv2.CONTOURS_MATCH_I1,
+                                           1)
 
-                if target_image_contours is not None and len(target_image_contours) > 0:
-                    distance = cv2.matchShapes(template_contours[0],
-                                               target_image_contours[0],
-                                               cv2.CONTOURS_MATCH_I1,
-                                               1)
-
-                    if distance < min_distance_found:
-                        match_found = True
-                        min_distance_found = distance
-                        min_top_left = top_left
-                        min_bottom_right = bottom_right
+                if distance < min_distance_found:
+                    match_found = True
+                    min_distance_found = distance
+                    min_top_left = top_left
+                    min_bottom_right = bottom_right
 
         if render_match and match_found:
             frame_copy = self.frame.copy()
@@ -366,7 +358,8 @@ class CVController:
         if frame_pre_processing_chain is not None:
             target_image = frame_pre_processing_chain.apply(self.frame)
 
-        if template_split['mask_present'] is True:
+        method_accepts_mask = (method == TemplateMatchingMethod.SQUARE_DIFFERENCE or method == TemplateMatchingMethod.CROSS_CORRELATION_NORMALIZED)
+        if method_accepts_mask and template_split['mask_present'] is True:
             return cv2.matchTemplate(target_image, template_split['image'], method.value, template_split['mask'])
         else:
             return cv2.matchTemplate(target_image, template_split['image'], method.value)
