@@ -255,42 +255,66 @@ class CVController:
         else:
             return None
 
-    def find_best_feature_based_match_sift(self, template_path: str):
+    def find_best_feature_based_match_sift(self,
+                                           template_path: str,
+                                           template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
+                                           frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None):
         self.__assert_controller_has_frame()
 
         template = cv2.imread(template_path, cv2.IMREAD_COLOR)
-        # template = image_processing.Resize(2, 2).process(template)
+        # template = image_processing.Resize(5, 5).process(template)
+        # template = image_processing.FlipHorizontal().process(template)
+        # self.frame = image_processing.Resize(1.5, 1.5).process(self.frame)
 
         return self.__find_best_feature_based_match(template,
                                                     cv2.xfeatures2d.SIFT_create(),
-                                                    cv2.NORM_L2)
+                                                    cv2.NORM_L2,
+                                                    template_pre_processing_chain,
+                                                    frame_pre_processing_chain)
 
-    def find_best_feature_based_match_surf(self, template_path: str):
+    def find_best_feature_based_match_surf(self,
+                                           template_path: str,
+                                           template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
+                                           frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None):
         self.__assert_controller_has_frame()
 
         template = cv2.imread(template_path, cv2.IMREAD_COLOR)
-        # template = image_processing.Resize(2, 2).process(template)
 
         return self.__find_best_feature_based_match(template,
                                                     cv2.xfeatures2d.SURF_create(),
-                                                    cv2.NORM_L2)
+                                                    cv2.NORM_L2,
+                                                    template_pre_processing_chain,
+                                                    frame_pre_processing_chain)
 
-    def find_best_feature_based_match_orb(self, template_path: str):
+    def find_best_feature_based_match_orb(self,
+                                          template_path: str,
+                                          template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
+                                          frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None):
         self.__assert_controller_has_frame()
 
         template = cv2.imread(template_path, cv2.IMREAD_COLOR)
-        template = image_processing.Resize(2, 2).process(template)
 
         return self.__find_best_feature_based_match(template,
                                                     cv2.ORB_create(),
-                                                    cv2.NORM_HAMMING)
+                                                    cv2.NORM_HAMMING,
+                                                    template_pre_processing_chain,
+                                                    frame_pre_processing_chain)
 
     def __find_best_feature_based_match(self,
                                         template,
                                         detector,
-                                        distance_measure):
+                                        distance_measure,
+                                        template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
+                                        frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None):
+        target_image = self.frame
+        if frame_pre_processing_chain is not None:
+            target_image = frame_pre_processing_chain.apply(target_image)
+
+        if template_pre_processing_chain is not None:
+            template = template_pre_processing_chain.apply(template)
+
         key_points_template, descriptors_template = detector.detectAndCompute(template, None)
-        key_points_target, descriptors_target = detector.detectAndCompute(self.frame, None)
+        key_points_target, descriptors_target = detector.detectAndCompute(target_image, None)
 
         brute_force_matcher = cv2.BFMatcher(distance_measure, crossCheck=True)
         matches = brute_force_matcher.match(descriptors_template, descriptors_target)

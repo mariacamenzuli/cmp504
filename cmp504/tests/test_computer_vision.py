@@ -221,7 +221,10 @@ def test_find_best_feature_based_match_surf():
 def test_find_best_feature_based_match_orb():
     cv_ctrl = cmp504.computer_vision.CVController()
     cv_ctrl.load_frame("cmp504/data/test/wargroove_screenshot.png")
-    best_match = cv_ctrl.find_best_feature_based_match_orb("cmp504/data/test/wargroove_commander_unit_mercia.png")
+    template_pre_processing_steps = cmp504.image_processing.ImageProcessingStepChain()
+    template_pre_processing_steps.append(cmp504.image_processing.Resize(2, 2))
+    best_match = cv_ctrl.find_best_feature_based_match_orb("cmp504/data/test/wargroove_commander_unit_mercia.png",
+                                                           template_pre_processing_chain=template_pre_processing_steps)
 
     assert_that(best_match).is_not_none()
     assert_that(best_match[0]).is_between(450, 490)
