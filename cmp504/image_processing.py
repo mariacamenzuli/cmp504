@@ -39,6 +39,11 @@ class BGR2Grayscale(ImageProcessingStep):
         return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 
+class BGRA2BGR(ImageProcessingStep):
+    def process(self, image):
+        return cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+
+
 class CannyEdgeDetection(ImageProcessingStep):
     def process(self, image):
         return cv2.Canny(image, 100, 200)

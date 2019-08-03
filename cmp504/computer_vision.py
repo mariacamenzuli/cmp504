@@ -217,7 +217,9 @@ class CVController:
                                        render_match: bool = False):
         self.__assert_controller_has_frame()
 
-        template = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
+        template = cv2.imread(template_path, cv2.IMREAD_UNCHANGED)
+        template = self.__transparent_pixels_to_white(template)
+        template = image_processing.BGR2Grayscale().process(template)
         template = image_processing.Threshold(binarization_threshold).process(template)
         template = image_processing.Invert().process(template)
         template_height = template.shape[0]
@@ -286,7 +288,9 @@ class CVController:
                                               render_match: bool = False):
         self.__assert_controller_has_frame()
 
-        template = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
+        template = cv2.imread(template_path, cv2.IMREAD_UNCHANGED)
+        template = self.__transparent_pixels_to_white(template)
+        template = image_processing.BGR2Grayscale().process(template)
         template = image_processing.Threshold(binarization_threshold).process(template)
         template = image_processing.Invert().process(template)
         template_height = template.shape[0]
@@ -491,6 +495,15 @@ class CVController:
             distance = sys.float_info.max
 
         return distance
+
+    @staticmethod
+    def __transparent_pixels_to_white(image):
+        if image.shape[2] > 3:
+            mask = image[:, :, 3] == 0
+            image[mask] = [255, 255, 255, 255]
+            return image_processing.BGRA2BGR().process(image)
+        else:
+            return image
 
     @staticmethod
     def __split_out_alpha_mask(image):
