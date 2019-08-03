@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 import cmp504.image_processing as image_processing
@@ -20,10 +20,18 @@ class TemplateMatchingMethod(Enum):
     CORRELATION_COEFFICIENT_NORMALIZED = cv2.TM_CCOEFF_NORMED
 
 
+class HuTemplateMatchingMethod(Enum):
+    METHOD_1 = cv2.CONTOURS_MATCH_I1
+    METHOD_2 = cv2.CONTOURS_MATCH_I2  # Sum of absolute differences
+    METHOD_3 = cv2.CONTOURS_MATCH_I3
+
+
 @dataclass
 class TemplateMatch:
     top_left: (int, int)
     bottom_right: (int, int)
+    similarity_score: float = field(compare=False)
+    threshold: float
 
     def __post_init__(self):
         self.mid_point = self.__calculate_midpoint(self.top_left, self.bottom_right)
@@ -31,6 +39,13 @@ class TemplateMatch:
     @staticmethod
     def __calculate_midpoint(point1, point2):
         return int(round((point1[0] + point2[0]) / 2)), int(round((point1[1] + point2[1]) / 2))
+
+
+@dataclass
+class FeatureBasedMatch:
+    location: (int, int)
+    distance_score: float
+    threshold: float
 
 
 class CVController:
@@ -102,7 +117,9 @@ class CVController:
         matches = []
         for match_location in zip(*match_locations[::-1]):
             matches.append(TemplateMatch(match_location,
-                                         (match_location[0] + template_width, match_location[1] + template_height)))
+                                         (match_location[0] + template_width, match_location[1] + template_height),
+                                         match_result[match_location[1]][match_location[0]],
+                                         threshold))
             cv2.rectangle(frame_copy,
                           match_location,
                           (match_location[0] + template_width, match_location[1] + template_height),
@@ -136,6 +153,8 @@ class CVController:
                                                template_pre_processing_chain,
                                                frame_pre_processing_chain)
 
+        # self.render_image(match_result_1)
+
         min_value, max_value, min_location, max_location = cv2.minMaxLoc(match_result_1)
 
         if match_horizontal_mirror:
@@ -162,6 +181,7 @@ class CVController:
                 logging.info("No match found.")
                 return None
 
+            similarity_score = min_value
             top_left = min_location
         else:
             logging.info("Maximum match value was %f.", max_value)
@@ -169,6 +189,7 @@ class CVController:
                 logging.info("No match found.")
                 return None
 
+            similarity_score = max_value
             top_left = max_location
 
         bottom_right = (top_left[0] + template_width, top_left[1] + template_height)
@@ -184,11 +205,12 @@ class CVController:
             cv2.rectangle(frame_copy, top_left, bottom_right, 255, 2)
             self.render_image(frame_copy)
 
-        return TemplateMatch(top_left, bottom_right)
+        return TemplateMatch(top_left, bottom_right, similarity_score, threshold)
 
     def find_template_match_hu_moments(self,
                                        template_path: str,
                                        threshold: float = 0.5,
+                                       method: HuTemplateMatchingMethod = HuTemplateMatchingMethod.METHOD_1,
                                        binarization_threshold: int = 127,
                                        stopping_threshold: float = 0,
                                        render_match: bool = False):
@@ -231,7 +253,7 @@ class CVController:
 
                 distance = cv2.matchShapes(template,
                                            target_image[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]],
-                                           cv2.CONTOURS_MATCH_I1,
+                                           method.value,
                                            1)
 
                 if distance < min_distance_found:
@@ -251,12 +273,13 @@ class CVController:
                                                                                                    min_distance_found))
 
         if match_found and min_distance_found <= threshold:
-            return TemplateMatch(min_top_left, min_bottom_right)
+            return TemplateMatch(min_top_left, min_bottom_right, min_distance_found, threshold)
         else:
             return None
 
     def find_best_feature_based_match_sift(self,
                                            template_path: str,
+                                           threshold: float = 50.0,
                                            template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
                                            frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None):
         self.__assert_controller_has_frame()
@@ -269,11 +292,13 @@ class CVController:
         return self.__find_best_feature_based_match(template,
                                                     cv2.xfeatures2d.SIFT_create(),
                                                     cv2.NORM_L2,
+                                                    threshold,
                                                     template_pre_processing_chain,
                                                     frame_pre_processing_chain)
 
     def find_best_feature_based_match_surf(self,
                                            template_path: str,
+                                           threshold: float = 50.0,
                                            template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
                                            frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None):
         self.__assert_controller_has_frame()
@@ -283,11 +308,13 @@ class CVController:
         return self.__find_best_feature_based_match(template,
                                                     cv2.xfeatures2d.SURF_create(),
                                                     cv2.NORM_L2,
+                                                    threshold,
                                                     template_pre_processing_chain,
                                                     frame_pre_processing_chain)
 
     def find_best_feature_based_match_orb(self,
                                           template_path: str,
+                                          threshold: float = 50.0,
                                           template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
                                           frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None):
         self.__assert_controller_has_frame()
@@ -297,6 +324,7 @@ class CVController:
         return self.__find_best_feature_based_match(template,
                                                     cv2.ORB_create(),
                                                     cv2.NORM_HAMMING,
+                                                    threshold,
                                                     template_pre_processing_chain,
                                                     frame_pre_processing_chain)
 
@@ -304,6 +332,7 @@ class CVController:
                                         template,
                                         detector,
                                         distance_measure,
+                                        threshold: float,
                                         template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
                                         frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None):
         target_image = self.frame
@@ -332,11 +361,13 @@ class CVController:
         #
         # self.render_image(image)
 
-        if not matches:
-            return None
+        if matches and matches[0].distance <= threshold:
+            return FeatureBasedMatch((int(key_points_target[matches[0].trainIdx].pt[0]),
+                                      int(key_points_target[matches[0].trainIdx].pt[1])),
+                                     matches[0].distance,
+                                     threshold)
         else:
-            return (int(key_points_target[matches[0].trainIdx].pt[0]),
-                    int(key_points_target[matches[0].trainIdx].pt[1]))
+            return None
 
     @staticmethod
     def __split_out_alpha_mask(image):

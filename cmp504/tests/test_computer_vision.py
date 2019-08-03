@@ -120,32 +120,33 @@ def test_find_template_match_with_preprocessing():
 
 
 def test_find_template_matches():
+    threshold = 0.98
     cv_ctrl = cmp504.computer_vision.CVController()
     cv_ctrl.load_frame("cmp504/data/test/mario_screenshot.png")
     matches = cv_ctrl.find_template_matches("cmp504/data/test/mario_coin.png",
-                                            threshold=0.98,
+                                            threshold=threshold,
                                             method=cmp504.computer_vision.TemplateMatchingMethod.CROSS_CORRELATION_NORMALIZED)
 
     assert_that(matches).is_not_empty()
-    assert_that(matches).contains_only(cmp504.computer_vision.TemplateMatch((73, 82), (82, 96)),
-                                       cmp504.computer_vision.TemplateMatch((87, 82), (96, 96)),
-                                       cmp504.computer_vision.TemplateMatch((101, 82), (110, 96)),
-                                       cmp504.computer_vision.TemplateMatch((115, 82), (124, 96)),
-                                       cmp504.computer_vision.TemplateMatch((129, 82), (138, 96)),
-                                       cmp504.computer_vision.TemplateMatch((59, 114), (68, 128)),
-                                       cmp504.computer_vision.TemplateMatch((73, 114), (82, 128)),
-                                       cmp504.computer_vision.TemplateMatch((87, 114), (96, 128)),
-                                       cmp504.computer_vision.TemplateMatch((101, 114), (110, 128)),
-                                       cmp504.computer_vision.TemplateMatch((115, 114), (124, 128)),
-                                       cmp504.computer_vision.TemplateMatch((129, 114), (138, 128)),
-                                       cmp504.computer_vision.TemplateMatch((143, 114), (152, 128)),
-                                       cmp504.computer_vision.TemplateMatch((59, 146), (68, 160)),
-                                       cmp504.computer_vision.TemplateMatch((73, 146), (82, 160)),
-                                       cmp504.computer_vision.TemplateMatch((87, 146), (96, 160)),
-                                       cmp504.computer_vision.TemplateMatch((101, 146), (110, 160)),
-                                       cmp504.computer_vision.TemplateMatch((115, 146), (124, 160)),
-                                       cmp504.computer_vision.TemplateMatch((129, 146), (138, 160)),
-                                       cmp504.computer_vision.TemplateMatch((143, 146), (152, 160)))
+    assert_that(matches).contains_only(cmp504.computer_vision.TemplateMatch((73, 82), (82, 96), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((87, 82), (96, 96), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((101, 82), (110, 96), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((115, 82), (124, 96), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((129, 82), (138, 96), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((59, 114), (68, 128), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((73, 114), (82, 128), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((87, 114), (96, 128), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((101, 114), (110, 128), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((115, 114), (124, 128), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((129, 114), (138, 128), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((143, 114), (152, 128), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((59, 146), (68, 160), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((73, 146), (82, 160), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((87, 146), (96, 160), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((101, 146), (110, 160), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((115, 146), (124, 160), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((129, 146), (138, 160), 1.0, threshold),
+                                       cmp504.computer_vision.TemplateMatch((143, 146), (152, 160), 1.0, threshold))
 
 
 def test_find_text_in_frame_with_no_preprocessing():
@@ -204,8 +205,8 @@ def test_find_best_feature_based_match_sift():
     best_match = cv_ctrl.find_best_feature_based_match_sift("cmp504/data/test/wargroove_commander_unit_mercia.png")
 
     assert_that(best_match).is_not_none()
-    assert_that(best_match[0]).is_between(450, 490)
-    assert_that(best_match[1]).is_between(265, 320)
+    assert_that(best_match.location[0]).is_between(450, 490)
+    assert_that(best_match.location[1]).is_between(265, 320)
 
 
 def test_find_best_feature_based_match_surf():
@@ -214,8 +215,8 @@ def test_find_best_feature_based_match_surf():
     best_match = cv_ctrl.find_best_feature_based_match_surf("cmp504/data/test/wargroove_commander_unit_mercia.png")
 
     assert_that(best_match).is_not_none()
-    assert_that(best_match[0]).is_between(450, 490)
-    assert_that(best_match[1]).is_between(265, 320)
+    assert_that(best_match.location[0]).is_between(450, 490)
+    assert_that(best_match.location[1]).is_between(265, 320)
 
 
 def test_find_best_feature_based_match_orb():
@@ -227,5 +228,5 @@ def test_find_best_feature_based_match_orb():
                                                            template_pre_processing_chain=template_pre_processing_steps)
 
     assert_that(best_match).is_not_none()
-    assert_that(best_match[0]).is_between(450, 490)
-    assert_that(best_match[1]).is_between(265, 320)
+    assert_that(best_match.location[0]).is_between(450, 490)
+    assert_that(best_match.location[1]).is_between(265, 320)
