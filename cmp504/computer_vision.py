@@ -204,7 +204,11 @@ class CVController:
         if render_match:
             frame_copy = self.frame.copy()
             cv2.rectangle(frame_copy, top_left, bottom_right, 255, 2)
-            self.render_image(frame_copy)
+            self.render_image(frame_copy,
+                              'Match top left (%d, %d), bottom right (%d, %d)' % (top_left[0],
+                                                                                  top_left[1],
+                                                                                  bottom_right[0],
+                                                                                  bottom_right[1]))
 
         return TemplateMatch(top_left, bottom_right, similarity_score, threshold)
 
