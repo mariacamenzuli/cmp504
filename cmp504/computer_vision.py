@@ -510,6 +510,19 @@ class CVController:
             return image
 
     @staticmethod
+    def __transparent_pixels_to_mid_intensity(image):
+        if image.shape[2] > 3:
+            mask = image[:, :, 3] == 0
+            image[mask] = [127, 127, 127, 127]
+            return image_processing.BGRA2BGR().process(image)
+        else:
+            return image
+
+    @staticmethod
+    def __has_alpha_channel(image):
+        return image.shape[2] > 3
+
+    @staticmethod
     def __split_out_alpha_mask(image):
         if image.shape[2] > 3:
             logging.debug('Alpha channel detected in image. Splitting out mask.')
@@ -544,20 +557,18 @@ class CVController:
                          frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None):
         self.__assert_controller_has_frame()
 
-        template_split = self.__split_out_alpha_mask(template)
-
         target_image = self.frame
         if template_pre_processing_chain is not None:
-            template_split['image'] = template_pre_processing_chain.apply(template_split['image'])
+            template = template_pre_processing_chain.apply(template)
 
         if frame_pre_processing_chain is not None:
             target_image = frame_pre_processing_chain.apply(self.frame)
 
-        method_accepts_mask = (method == TemplateMatchingMethod.SQUARE_DIFFERENCE or method == TemplateMatchingMethod.CROSS_CORRELATION_NORMALIZED)
-        if method_accepts_mask and template_split['mask_present'] is True:
-            return cv2.matchTemplate(target_image, template_split['image'], method.value, template_split['mask'])
+        if self.__has_alpha_channel(template):
+            template = self.__transparent_pixels_to_mid_intensity(template)
+            return cv2.matchTemplate(target_image, template, method.value)
         else:
-            return cv2.matchTemplate(target_image, template_split['image'], method.value)
+            return cv2.matchTemplate(target_image, template, method.value)
 
     def __assert_controller_has_frame(self):
         assert (self.frame is not None), "A frame is required. Use 'capture_frame' or 'load_frame' to prepare frame."
