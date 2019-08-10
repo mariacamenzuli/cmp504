@@ -359,7 +359,8 @@ class CVController:
                                            template_path: str,
                                            threshold: float = 50.0,
                                            template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
-                                           frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None):
+                                           frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
+                                           match_horizontal_mirror: bool = False):
         self.__assert_controller_has_frame()
 
         template = cv2.imread(template_path, cv2.IMREAD_COLOR)
@@ -372,13 +373,15 @@ class CVController:
                                                     cv2.NORM_L2,
                                                     threshold,
                                                     template_pre_processing_chain,
-                                                    frame_pre_processing_chain)
+                                                    frame_pre_processing_chain,
+                                                    match_horizontal_mirror)
 
     def find_best_feature_based_match_surf(self,
                                            template_path: str,
                                            threshold: float = 50.0,
                                            template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
-                                           frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None):
+                                           frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
+                                           match_horizontal_mirror: bool = False):
         self.__assert_controller_has_frame()
 
         template = cv2.imread(template_path, cv2.IMREAD_COLOR)
@@ -388,13 +391,15 @@ class CVController:
                                                     cv2.NORM_L2,
                                                     threshold,
                                                     template_pre_processing_chain,
-                                                    frame_pre_processing_chain)
+                                                    frame_pre_processing_chain,
+                                                    match_horizontal_mirror)
 
     def find_best_feature_based_match_orb(self,
                                           template_path: str,
                                           threshold: float = 50.0,
                                           template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
-                                          frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None):
+                                          frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
+                                          match_horizontal_mirror: bool = False):
         self.__assert_controller_has_frame()
 
         template = cv2.imread(template_path, cv2.IMREAD_COLOR)
@@ -404,7 +409,8 @@ class CVController:
                                                     cv2.NORM_HAMMING,
                                                     threshold,
                                                     template_pre_processing_chain,
-                                                    frame_pre_processing_chain)
+                                                    frame_pre_processing_chain,
+                                                    match_horizontal_mirror)
 
     def __find_best_feature_based_match(self,
                                         template,
@@ -412,7 +418,8 @@ class CVController:
                                         distance_measure,
                                         threshold: float,
                                         template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
-                                        frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None):
+                                        frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
+                                        match_horizontal_mirror: bool = False):
         target_image = self.frame
         if frame_pre_processing_chain is not None:
             target_image = frame_pre_processing_chain.apply(target_image)
@@ -425,6 +432,12 @@ class CVController:
 
         brute_force_matcher = cv2.BFMatcher(distance_measure, crossCheck=True)
         matches = brute_force_matcher.match(descriptors_template, descriptors_target)
+
+        if match_horizontal_mirror:
+            template = image_processing.FlipHorizontal().process(template)
+            key_points_template, descriptors_template = detector.detectAndCompute(template, None)
+            matches = matches + brute_force_matcher.match(descriptors_template, descriptors_target)
+
         matches = sorted(matches, key=lambda x: x.distance)
 
         # matching_result = cv2.drawMatches(template,
