@@ -570,6 +570,9 @@ class CVController:
                          frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None):
         self.__assert_controller_has_frame()
 
+        if self.__has_alpha_channel(template):
+            template = self.__transparent_pixels_to_mid_intensity(template)
+
         target_image = self.frame
         if template_pre_processing_chain is not None:
             template = template_pre_processing_chain.apply(template)
@@ -577,11 +580,7 @@ class CVController:
         if frame_pre_processing_chain is not None:
             target_image = frame_pre_processing_chain.apply(self.frame)
 
-        if self.__has_alpha_channel(template):
-            template = self.__transparent_pixels_to_mid_intensity(template)
-            return cv2.matchTemplate(target_image, template, method.value)
-        else:
-            return cv2.matchTemplate(target_image, template, method.value)
+        return cv2.matchTemplate(target_image, template, method.value)
 
     def __assert_controller_has_frame(self):
         assert (self.frame is not None), "A frame is required. Use 'capture_frame' or 'load_frame' to prepare frame."
