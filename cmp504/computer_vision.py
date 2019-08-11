@@ -222,7 +222,7 @@ class CVController:
         self.__assert_controller_has_frame()
 
         template = cv2.imread(template_path, cv2.IMREAD_UNCHANGED)
-        template = self.__transparent_pixels_to_white(template)
+        template = image_processing.ColorTransparentPixels(image_processing.COLOR_WHITE).process(template)
         template = image_processing.BGR2Grayscale().process(template)
         template = image_processing.Threshold(binarization_threshold).process(template)
         template = image_processing.Invert().process(template)
@@ -293,7 +293,7 @@ class CVController:
         self.__assert_controller_has_frame()
 
         template = cv2.imread(template_path, cv2.IMREAD_UNCHANGED)
-        template = self.__transparent_pixels_to_white(template)
+        template = image_processing.ColorTransparentPixels(image_processing.COLOR_WHITE).process(template)
         template = image_processing.BGR2Grayscale().process(template)
         template = image_processing.Threshold(binarization_threshold).process(template)
         template = image_processing.Invert().process(template)
@@ -364,9 +364,6 @@ class CVController:
         self.__assert_controller_has_frame()
 
         template = cv2.imread(template_path, cv2.IMREAD_COLOR)
-        # template = image_processing.Resize(5, 5).process(template)
-        # template = image_processing.FlipHorizontal().process(template)
-        # self.frame = image_processing.Resize(1.5, 1.5).process(self.frame)
 
         return self.__find_best_feature_based_match(template,
                                                     cv2.xfeatures2d.SIFT_create(),
@@ -514,30 +511,12 @@ class CVController:
         return distance
 
     @staticmethod
-    def __transparent_pixels_to_white(image):
-        if image.shape[2] > 3:
-            mask = image[:, :, 3] == 0
-            image[mask] = [255, 255, 255, 255]
-            return image_processing.BGRA2BGR().process(image)
-        else:
-            return image
-
-    @staticmethod
-    def __transparent_pixels_to_mid_intensity(image):
-        if image.shape[2] > 3:
-            mask = image[:, :, 3] == 0
-            image[mask] = [127, 127, 127, 127]
-            return image_processing.BGRA2BGR().process(image)
-        else:
-            return image
-
-    @staticmethod
     def __has_alpha_channel(image):
         return image.shape[2] > 3
 
     @staticmethod
     def __split_out_alpha_mask(image):
-        if image.shape[2] > 3:
+        if CVController.__has_alpha_channel(image):
             logging.debug('Alpha channel detected in image. Splitting out mask.')
             channels = cv2.split(image)
             mask = np.array(channels[3])
@@ -571,7 +550,8 @@ class CVController:
         self.__assert_controller_has_frame()
 
         if self.__has_alpha_channel(template):
-            template = self.__transparent_pixels_to_mid_intensity(template)
+            if template_pre_processing_chain is None or not any(isinstance(item, image_processing.ColorTransparentPixels) for item in template_pre_processing_chain.steps):
+                template = image_processing.ColorTransparentPixels(image_processing.COLOR_MID_INTENSITY).process(template)
 
         target_image = self.frame
         if template_pre_processing_chain is not None:

@@ -1,6 +1,10 @@
 import cv2
 
 
+COLOR_WHITE = 255
+COLOR_MID_INTENSITY = 127
+
+
 class ImageProcessingStep:
     def process(self, image): pass
 
@@ -78,3 +82,16 @@ class Invert(ImageProcessingStep):
 class FlipHorizontal(ImageProcessingStep):
     def process(self, image):
         return cv2.flip(image, 1)
+
+
+class ColorTransparentPixels(ImageProcessingStep):
+    def __init__(self, color: int = 127):
+        self.color = color
+
+    def process(self, image):
+        if image.shape[2] > 3:
+            mask = image[:, :, 3] == 0
+            image[mask] = [self.color, self.color, self.color, self.color]
+            return BGRA2BGR().process(image)
+        else:
+            return image
