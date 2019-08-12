@@ -1,6 +1,5 @@
 import cv2
 
-
 COLOR_WHITE = 255
 COLOR_MID_INTENSITY = 127
 
@@ -10,8 +9,11 @@ class ImageProcessingStep:
 
 
 class ImageProcessingStepChain:
-    def __init__(self):
-        self.steps = []
+    def __init__(self, steps: [] = None):
+        if steps is None:
+            self.steps = []
+        else:
+            self.steps = steps
 
     def append(self, step: ImageProcessingStep):
         self.steps.append(step)

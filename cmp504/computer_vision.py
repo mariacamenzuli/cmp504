@@ -138,16 +138,22 @@ class CVController:
                             method: TemplateMatchingMethod = TemplateMatchingMethod.CROSS_CORRELATION_NORMALIZED,
                             template_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
                             frame_pre_processing_chain: image_processing.ImageProcessingStepChain = None,
-                            match_horizontal_mirror: bool = False,
+                            template_variation_steps=None,
                             render_match: bool = False):
+        if template_variation_steps is None:
+            template_variation_steps = []
+
         logging.debug("Looking for template match using template from file '%s', threshold %f, and matching method %s.",
                       template_path,
                       threshold,
                       method.name)
 
         template = cv2.imread(template_path, cv2.IMREAD_UNCHANGED)
-        template_height = template.shape[0]
-        template_width = template.shape[1]
+
+        template_height_at_min = template.shape[0]
+        template_width_at_min = template.shape[1]
+        template_height_at_max = template.shape[0]
+        template_width_at_max = template.shape[1]
 
         match_result_1 = self.__match_template(template,
                                                method,
@@ -158,10 +164,12 @@ class CVController:
 
         min_value, max_value, min_location, max_location = cv2.minMaxLoc(match_result_1)
 
-        if match_horizontal_mirror:
-            template_flipped_horizontally = image_processing.FlipHorizontal().process(template)
+        for template_variation_step in template_variation_steps:
+            if not isinstance(template_variation_step, image_processing.ImageProcessingStepChain):
+                continue
+            template_variation = template_variation_step.apply(template)
 
-            match_result_2 = self.__match_template(template_flipped_horizontally,
+            match_result_2 = self.__match_template(template_variation,
                                                    method,
                                                    template_pre_processing_chain,
                                                    frame_pre_processing_chain)
@@ -171,10 +179,14 @@ class CVController:
             if min_value2 < min_value:
                 min_value = min_value2
                 min_location = min_location2
+                template_height_at_min = template_variation.shape[0]
+                template_width_at_min = template_variation.shape[1]
 
             if max_value2 > max_value:
                 max_value = max_value2
                 max_location = max_location2
+                template_height_at_max = template_variation.shape[0]
+                template_width_at_max = template_variation.shape[1]
 
         if self.is_best_match_the_global_minimum(method):
             logging.info("Minimum match value was %f.", min_value)
@@ -184,6 +196,8 @@ class CVController:
 
             similarity_score = min_value
             top_left = min_location
+            template_width = template_width_at_min
+            template_height = template_height_at_min
         else:
             logging.info("Maximum match value was %f.", max_value)
             if max_value <= threshold:
@@ -192,6 +206,8 @@ class CVController:
 
             similarity_score = max_value
             top_left = max_location
+            template_width = template_width_at_max
+            template_height = template_height_at_max
 
         bottom_right = (top_left[0] + template_width, top_left[1] + template_height)
 
@@ -550,8 +566,11 @@ class CVController:
         self.__assert_controller_has_frame()
 
         if self.__has_alpha_channel(template):
-            if template_pre_processing_chain is None or not any(isinstance(item, image_processing.ColorTransparentPixels) for item in template_pre_processing_chain.steps):
-                template = image_processing.ColorTransparentPixels(image_processing.COLOR_MID_INTENSITY).process(template)
+            if template_pre_processing_chain is None or not any(
+                    isinstance(item, image_processing.ColorTransparentPixels) for item in
+                    template_pre_processing_chain.steps):
+                template = image_processing.ColorTransparentPixels(image_processing.COLOR_MID_INTENSITY).process(
+                    template)
 
         target_image = self.frame
         if template_pre_processing_chain is not None:

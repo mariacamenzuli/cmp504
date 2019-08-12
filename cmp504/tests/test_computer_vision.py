@@ -84,13 +84,16 @@ def test_find_template_match_with_transparent_template_when_match_exists():
     assert_that(match.mid_point).is_equal_to((279, 348))
 
 
-def test_find_template_match_with_horizontal_template_flip():
+def test_find_template_match_with_template_variation():
     cv_ctrl = cmp504.computer_vision.CVController()
     cv_ctrl.load_frame("cmp504/data/test/wargroove_screenshot_mirrored_commander.png")
+    template_variation_steps = [
+        cmp504.image_processing.ImageProcessingStepChain([cmp504.image_processing.FlipHorizontal()]),
+    ]
     match = cv_ctrl.find_template_match("cmp504/data/test/wargroove_commander_unit_mercia.png",
                                         threshold=0.6,
                                         method=cmp504.computer_vision.TemplateMatchingMethod.CROSS_CORRELATION_NORMALIZED,
-                                        match_horizontal_mirror=True)
+                                        template_variation_steps=template_variation_steps)
 
     assert_that(match).is_not_none()
     assert_that(match.top_left).is_equal_to((451, 266))
