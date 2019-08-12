@@ -332,77 +332,6 @@ class CVController:
         else:
             return None
 
-    def find_template_match_hu_moments_custom(self,
-                                              template_path: str,
-                                              threshold: float = 0.5,
-                                              binarization_threshold: int = 127,
-                                              stopping_threshold: float = 0,
-                                              render_match: bool = False):
-        self.__assert_controller_has_frame()
-
-        template = cv2.imread(template_path, cv2.IMREAD_UNCHANGED)
-        template = image_processing.ColorTransparentPixels(image_processing.COLOR_WHITE).process(template)
-        template = image_processing.BGR2Grayscale().process(template)
-        template = image_processing.Threshold(binarization_threshold).process(template)
-        template = image_processing.Invert().process(template)
-        template_height = template.shape[0]
-        template_width = template.shape[1]
-
-        target_image = image_processing.BGR2Grayscale().process(self.frame)
-        target_image = image_processing.Threshold(binarization_threshold).process(target_image)
-        target_image = image_processing.Invert().process(target_image)
-
-        # self.render_image(template, 'Template')
-        # self.render_image(target_image, 'Target Image')
-
-        target_image_height = target_image.shape[0]
-        target_image_width = target_image.shape[1]
-
-        if template_height > target_image_height or template_width > target_image_width:
-            return None
-
-        min_distance_found = 999999999
-        min_top_left = (0, 0)
-        min_bottom_right = (0, 0)
-        match_found = False
-
-        template_hu_moments = cv2.HuMoments(cv2.moments(template))
-
-        for x in range(0, target_image_width - template_width + 1):
-            if min_distance_found <= stopping_threshold:
-                break
-
-            for y in range(0, target_image_height - template_height + 1):
-                if min_distance_found <= stopping_threshold:
-                    break
-
-                top_left = (x, y)
-                bottom_right = (x + template_width, y + template_height)
-
-                target_patch_hu_moments = cv2.HuMoments(cv2.moments(target_image[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]))
-                distance = self.__custom_match_shapes(template_hu_moments, target_patch_hu_moments)
-
-                if distance < min_distance_found:
-                    match_found = True
-                    min_distance_found = distance
-                    min_top_left = top_left
-                    min_bottom_right = bottom_right
-
-        if render_match and match_found:
-            frame_copy = self.frame.copy()
-            cv2.rectangle(frame_copy, min_top_left, min_bottom_right, 255, 2)
-            self.render_image(frame_copy,
-                              'Match top left (%d, %d), bottom right (%d, %d), distance %03.2f' % (min_top_left[0],
-                                                                                                   min_top_left[1],
-                                                                                                   min_bottom_right[0],
-                                                                                                   min_bottom_right[1],
-                                                                                                   min_distance_found))
-
-        if match_found and min_distance_found <= threshold:
-            return TemplateMatch(min_top_left, min_bottom_right, min_distance_found, threshold)
-        else:
-            return None
-
     def find_best_feature_based_match_sift(self,
                                            template_path: str,
                                            threshold: float = 50.0,
@@ -504,59 +433,6 @@ class CVController:
                                      threshold)
         else:
             return None
-
-    @staticmethod
-    def __custom_match_shapes(template_hu_moments, target_patch_hu_moments):
-        eps = 1.e-5
-        distance = 0.0
-        anyA = False
-        anyB = False
-
-        for i in range(0, 6):
-            abs_moment_a = abs(template_hu_moments[i])
-            abs_moment_b = abs(target_patch_hu_moments[i])
-
-            if abs_moment_a > 0:
-                anyA = True
-            if abs_moment_b > 0:
-                anyB = True
-
-            if template_hu_moments[i] > 0:
-                sign_moment_a = 1
-            elif template_hu_moments[i] < 0:
-                sign_moment_a = -1
-            else:
-                sign_moment_a = 0
-
-            if target_patch_hu_moments[i] > 0:
-                sign_moment_b = 1
-            elif target_patch_hu_moments[i] < 0:
-                sign_moment_b = -1
-            else:
-                sign_moment_b = 0
-
-            if abs_moment_a > eps and abs_moment_b > eps:
-                abs_moment_a = sign_moment_a * np.log10(abs_moment_a)
-                abs_moment_b = sign_moment_b * np.log10(abs_moment_b)
-                distance += abs(-abs_moment_a + abs_moment_b)
-
-        abs_moment_a = abs(template_hu_moments[6])
-        abs_moment_b = abs(target_patch_hu_moments[6])
-
-        if abs_moment_a > 0:
-            anyA = True
-        if abs_moment_b > 0:
-            anyB = True
-
-        if abs_moment_a > eps and abs_moment_b > eps:
-            abs_moment_a = np.log10(abs_moment_a)
-            abs_moment_b = np.log10(abs_moment_b)
-            distance += abs(-abs_moment_a + abs_moment_b)
-
-        if anyA != anyB:
-            distance = sys.float_info.max
-
-        return distance
 
     @staticmethod
     def __has_alpha_channel(image):
