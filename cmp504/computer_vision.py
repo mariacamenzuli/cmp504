@@ -228,6 +228,29 @@ class CVController:
 
         return TemplateMatch(top_left, bottom_right, similarity_score, threshold)
 
+    def find_template_match_hu_moments_with_patch_multiplier(self,
+                                                             template_path: str,
+                                                             patch_size_template_size_multiplier: float,
+                                                             threshold: float = 0.5,
+                                                             method: HuTemplateMatchingMethod = HuTemplateMatchingMethod.METHOD_1,
+                                                             binarization_threshold: int = 127,
+                                                             stopping_threshold: float = 0,
+                                                             render_match: bool = False):
+        if patch_size_template_size_multiplier <= 0:
+            patch_size_template_size_multiplier = 1
+
+        template = cv2.imread(template_path, cv2.IMREAD_UNCHANGED)
+        template_height = template.shape[0]
+        template_width = template.shape[1]
+        return self.find_template_match_hu_moments(template_path,
+                                                   threshold,
+                                                   method,
+                                                   binarization_threshold,
+                                                   stopping_threshold,
+                                                   int(template_width * patch_size_template_size_multiplier) + 1,
+                                                   int(template_height * patch_size_template_size_multiplier) + 1,
+                                                   render_match)
+
     def find_template_match_hu_moments(self,
                                        template_path: str,
                                        threshold: float = 0.5,

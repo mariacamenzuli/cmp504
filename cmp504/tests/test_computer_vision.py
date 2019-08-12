@@ -204,6 +204,19 @@ def test_find_template_match_hu_moments_finds_match_in_different_size_patch():
     assert_that(match.mid_point).is_equal_to((22, 26))
 
 
+def test_find_template_match_hu_moments_finds_match_with_patch_multiplier():
+    cv_ctrl = cmp504.computer_vision.CVController()
+    cv_ctrl.load_frame("cmp504/data/test/wargroove_screenshot_half_resolution.png")
+    match = cv_ctrl.find_template_match_hu_moments_with_patch_multiplier("cmp504/data/test/wargroove_commander_portrait.png",
+                                                                         0.5,
+                                                                         binarization_threshold=200)
+
+    assert_that(match).is_not_none()
+    assert_that(match.top_left).is_equal_to((4, 7))
+    assert_that(match.bottom_right).is_equal_to((40, 44))
+    assert_that(match.mid_point).is_equal_to((22, 26))
+
+
 def test_find_template_match_hu_moments_finds_mirrored_match():
     cv_ctrl = cmp504.computer_vision.CVController()
     cv_ctrl.load_frame("cmp504/data/test/wargroove_screenshot_mirrored_commander.png")
