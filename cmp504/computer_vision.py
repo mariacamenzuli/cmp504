@@ -234,6 +234,8 @@ class CVController:
                                        method: HuTemplateMatchingMethod = HuTemplateMatchingMethod.METHOD_1,
                                        binarization_threshold: int = 127,
                                        stopping_threshold: float = 0,
+                                       patch_width: int = None,
+                                       patch_height: int = None,
                                        render_match: bool = False):
         self.__assert_controller_has_frame()
 
@@ -242,8 +244,15 @@ class CVController:
         template = image_processing.BGR2Grayscale().process(template)
         template = image_processing.Threshold(binarization_threshold).process(template)
         template = image_processing.Invert().process(template)
+
         template_height = template.shape[0]
         template_width = template.shape[1]
+
+        if patch_width is None:
+            patch_width = template_width
+
+        if patch_height is None:
+            patch_height = template_height
 
         target_image = image_processing.BGR2Grayscale().process(self.frame)
         target_image = image_processing.Threshold(binarization_threshold).process(target_image)
@@ -255,7 +264,7 @@ class CVController:
         target_image_height = target_image.shape[0]
         target_image_width = target_image.shape[1]
 
-        if template_height > target_image_height or template_width > target_image_width:
+        if patch_height > target_image_height or patch_width > target_image_width:
             return None
 
         min_distance_found = sys.float_info.max
@@ -263,16 +272,16 @@ class CVController:
         min_bottom_right = (0, 0)
         match_found = False
 
-        for x in range(0, target_image_width - template_width + 1):
+        for x in range(0, target_image_width - patch_width + 1):
             if min_distance_found <= stopping_threshold:
                 break
 
-            for y in range(0, target_image_height - template_height + 1):
+            for y in range(0, target_image_height - patch_height + 1):
                 if min_distance_found <= stopping_threshold:
                     break
 
                 top_left = (x, y)
-                bottom_right = (x + template_width, y + template_height)
+                bottom_right = (x + patch_width, y + patch_height)
 
                 distance = cv2.matchShapes(template,
                                            target_image[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]],
